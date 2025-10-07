@@ -47,6 +47,7 @@ from the database
 
   PORT=3000
 
+<<<<<<< HEAD
 - Inside the `src/config` folder create a file named as `config.json` and write the 
 following code:
 
@@ -74,8 +75,30 @@ following code:
     "dialect": "mysql"
   }
 }
+=======
+
+
+- go inside the `src` folder and execute the following command:
+    ````
+    npx sequelize init
+
+    ```````
+- By executing the above command you will get migrations and seeders folder along
+with a config.json inside the config folder.
+
+- If you're setting up your development environment, then write the username of your
+>>>>>>> db717e6 (updated readme)
 - If you;re setting up your development environment, then write the username of your 
 db, password of your db and in dialect mention whatever db you are using for ex:
 mysql, mariadb etc
 - If you're setting up test or prod environment, make sure you also replace the h
 with the hosted db url.
+<<<<<<< HEAD
+=======
+- to run the server execute
+``````
+
+npm run dev
+
+``````
+>>>>>>> db717e6 (updated readme)
