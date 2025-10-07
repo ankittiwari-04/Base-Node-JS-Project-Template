@@ -1,7 +1,9 @@
+const { StatusCodes } = require('http-status-codes');
 const { ErrorResponse, SuccessResponse } = require('../utils/common');
-const { Airplane } = require('../models');   // if you're using Sequelize models
+const AirplaneService = require('../services/Airplane-service');
 
-// Example function to create an airplane
+
+// Create airplane
 async function createAirplane(req, res) {
   try {
     const airplane = await AirplaneService.createAirplane({
@@ -17,29 +19,65 @@ async function createAirplane(req, res) {
   } catch (error) {
     ErrorResponse.error = error;
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
       .json(ErrorResponse);
   }
-}async function getAirplanes(req,res) {
-    try{
-        const airplanes=await AirplaneService.getAirplanes();
-        SuccessResponse.data= airplanes;
-        return res
-      .status(StatusCodes.ok)
+}
+
+// Get all airplanes
+async function getAirplanes(req, res) {
+  try {
+    const airplanes = await AirplaneService.getAirplanes();
+    SuccessResponse.data = airplanes;
+    return res
+      .status(StatusCodes.OK)
       .json(SuccessResponse);
 
-    }catch(error){
- ErrorResponse.error = error;
+  } catch (error) {
+    ErrorResponse.error = error;
     return res
-      .status(error.statusCode)
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
       .json(ErrorResponse);
   }
-        }
-    
+}
 
+// Get single airplane
+async function getAirplane(req, res) {
+  try {
+    const airplane = await AirplaneService.getAirplane(req.params.id);
+    SuccessResponse.data = airplane;
+    return res
+      .status(StatusCodes.OK)
+      .json(SuccessResponse);
+
+  } catch (error) {
+    ErrorResponse.error = error;
+    return res
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+      .json(ErrorResponse);
+  }
+}
+
+// Delete airplane
+async function destroyAirplane(req, res) {
+  try {
+    const result = await AirplaneService.destroyAirplane(req.params.id);
+    SuccessResponse.data = result;
+    return res
+      .status(StatusCodes.OK)
+      .json(SuccessResponse);
+
+  } catch (error) {
+    ErrorResponse.error = error;
+    return res
+      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+      .json(ErrorResponse);
+  }
+}
 
 module.exports = {
   createAirplane,
-  getAirplanes
+  getAirplanes,
+  getAirplane,
+  destroyAirplane
 };
-

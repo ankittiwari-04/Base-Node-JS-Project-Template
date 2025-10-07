@@ -1,18 +1,19 @@
 const express = require('express');
 
 const { AirplaneController } = require('../../controllers');
-const {AirplaneMiddlewares}= require('../../middlewares'); // semicolon is a stray character
+const { AirplaneMiddlewares } = require('../../middlewares'); // Requires middleware index
+
 const router = express.Router();
 
-// /api/v1/airplanes POST
-router
-.post('/', 
+// /api/v1/airplanes POST - Includes validation middleware
+router.post(
+    '/', 
     AirplaneMiddlewares.validateCreateRequest,
-     AirplaneController.createAirplane);
+    AirplaneController.createAirplane
+);
 
-router
-     .get('/', 
-   
-     AirplaneController.getAirplanes);
+router.get('/', AirplaneController.getAirplanes);
+router.get('/:id', AirplaneController.getAirplane);
+router.delete('/:id', AirplaneController.destroyAirplane);
 
 module.exports = router;
