@@ -7,9 +7,25 @@ module.exports = (sequelize, DataTypes) => {
       // Airport belongs to City with cascade rules
       Airport.belongsTo(models.City, { 
         foreignKey: 'cityId',
-        as: 'city',       // optional alias
+        as: 'city',       
         onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'  // change to RESTRICT if needed
+        onDelete: 'CASCADE'  
+      });
+
+      // Airport has many flights as departure airport
+      Airport.hasMany(models.Flight, {
+        foreignKey: 'departureAirportId',
+        as: 'departingFlights',   
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      });
+
+      // Airport has many flights as arrival airport
+      Airport.hasMany(models.Flight, {
+        foreignKey: 'arrivalAirportId',
+        as: 'arrivingFlights',    
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       });
     }
   }
@@ -37,8 +53,8 @@ module.exports = (sequelize, DataTypes) => {
           model: 'Cities', // table name
           key: 'id'
         },
-        onUpdate: 'CASCADE', // updates in Cities.id cascade here
-        onDelete: 'CASCADE'  // deletes in Cities.id cascade here
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       }
     },
     {
