@@ -26,3 +26,4 @@ async function createCity(req, res) {
 module.exports = {
   createCity,
 };
+ 
