@@ -9,7 +9,13 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index.js` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      // Correct association: City has many Airports
+      City.hasMany(models.Airport, {
+        foreignKey: 'cityId', // should match the column name in Airport
+        as: 'airports',       // optional alias for easier querying
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      });
     }
   }
 
@@ -24,6 +30,8 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: 'City',
+      tableName: 'Cities',
+      timestamps: true
     }
   );
 
