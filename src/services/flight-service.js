@@ -1,4 +1,4 @@
-// services/flight-service.js
+
 const { Op } = require('sequelize');
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
