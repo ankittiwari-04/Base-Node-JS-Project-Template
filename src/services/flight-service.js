@@ -1,67 +1,82 @@
+// services/flight-service.js
+const { Op } = require('sequelize');
 const { StatusCodes } = require('http-status-codes');
-const { FlightRepository } = require('../repositories');
 const AppError = require('../utils/errors/app-error');
-const { compareTime } = require('../utils/helpers/datetime-helpers');
+const FlightsRepository = require('../repositories/flight-repository');
 
-const flightRepository = new FlightRepository();
+const flightsRepository = new FlightsRepository();
 
-// Create Flight
 async function createFlight(data) {
     try {
-        // Arrival must be after departure
-        if (!compareTime(data.arrivalTime, data.departureTime)) {
-            throw new AppError(
-                'Arrival time cannot be before departure time',
-                StatusCodes.BAD_REQUEST
-            );
-        }
-
-        const flight = await flightRepository.create(data);
+        const flight = await flightsRepository.create(data);
         return flight;
     } catch (error) {
+        if (error.name === 'SequelizeValidationError') {
+            let explanation = [];
+            error.errors.forEach((err) => {
+                explanation.push(err.message);
+            });
+            throw new AppError(explanation, StatusCodes.BAD_REQUEST);
+        }
         throw new AppError(
-            'Cannot create a new Flight object',
-            error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR
+            'Cannot create a new flight object',
+            StatusCodes.INTERNAL_SERVER_ERROR
         );
     }
 }
 
-// Get All Flights with filters and sort
 async function getAllFlights(query) {
     try {
         let customFilter = {};
-
-        // Filter by trips: e.g., trips=MUM-DEL
+        let sortFilter = [];
+        
         if (query.trips) {
             const [departure, arrival] = query.trips.split('-');
-            customFilter.departureAirportCode = departure;
-            customFilter.arrivalAirportCode = arrival;
+              const airportMap = {
+               'DEL': 5,  
+               'BOM': 6,  
+               'BLR': 7,  
+               'HYD': 8   
+};
+     
+
+            if (!airportMap[departure] || !airportMap[arrival]) {
+                throw new AppError('Invalid airport code in trips parameter', StatusCodes.BAD_REQUEST);
+            }
+
+            customFilter.departureAirportId = airportMap[departure];
+            customFilter.arrivalAirportId = airportMap[arrival];
         }
 
-        // Filter by price range
-        if (query.minPrice || query.maxPrice) {
-            customFilter.price = {};
-            if (query.minPrice) customFilter.price['$gte'] = Number(query.minPrice);
-            if (query.maxPrice) customFilter.price['$lte'] = Number(query.maxPrice);
+        if (query.price) {
+            const [minPrice, maxPrice] = query.price.split('-').map(Number);
+            customFilter.price = {
+                [Op.between]: [minPrice || 0, maxPrice || 999999]
+            };
         }
 
-        // Filter by dates
-        if (query.departureDate) customFilter.departureTime = { $gte: new Date(query.departureDate) };
-        if (query.arrivalDate) customFilter.arrivalTime = { $lte: new Date(query.arrivalDate) };
-
-        // Sorting
-        let sortFilters = [];
         if (query.sort) {
             const params = query.sort.split(',');
-            sortFilters = params.map(param => param.split('_')); // e.g., "price_ASC" -> ["price","ASC"]
+            const sortFilters = params.map((param) => param.split('_'));
+            sortFilter = sortFilters;
         }
 
-        const flights = await flightRepository.getAllFlights({ filter: customFilter, sort: sortFilters });
-        return flights;
+        console.log('Custom Filter:', customFilter);
+        console.log('Sort Filter:', sortFilter);
 
+        const flights = await flightsRepository.getAllFlights(customFilter, sortFilter);
+        
+        console.log('Flights found:', flights.length);
+        
+        return flights;
+        
     } catch (error) {
+        console.error('Error in getAllFlights:', error);
+        if (error instanceof AppError) {
+            throw error;
+        }
         throw new AppError(
-            'Cannot fetch data of all the flights',
+            `Cannot fetch data of all the flights: ${error.message}`, 
             StatusCodes.INTERNAL_SERVER_ERROR
         );
     }
