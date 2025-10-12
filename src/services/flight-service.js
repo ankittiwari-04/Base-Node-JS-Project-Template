@@ -1,4 +1,3 @@
-
 const { Op } = require('sequelize');
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/errors/app-error');
@@ -25,6 +24,21 @@ async function createFlight(data) {
     }
 }
 
+async function getFlight(id) {
+    try {
+        const flight = await flightsRepository.get(id);
+        return flight;
+    } catch (error) {
+        if (error.statusCode === StatusCodes.NOT_FOUND) {
+            throw new AppError('Flight not found', StatusCodes.NOT_FOUND);
+        }
+        throw new AppError(
+            'Cannot fetch flight data',
+            StatusCodes.INTERNAL_SERVER_ERROR
+        );
+    }
+}
+
 async function getAllFlights(query) {
     try {
         let customFilter = {};
@@ -32,13 +46,12 @@ async function getAllFlights(query) {
         
         if (query.trips) {
             const [departure, arrival] = query.trips.split('-');
-              const airportMap = {
-               'DEL': 5,  
-               'BOM': 6,  
-               'BLR': 7,  
-               'HYD': 8   
-};
-     
+            const airportMap = {
+                'DEL': 5,  
+                'BOM': 6,  
+                'BLR': 7,  
+                'HYD': 8   
+            };
 
             if (!airportMap[departure] || !airportMap[arrival]) {
                 throw new AppError('Invalid airport code in trips parameter', StatusCodes.BAD_REQUEST);
@@ -84,5 +97,6 @@ async function getAllFlights(query) {
 
 module.exports = {
     createFlight,
+    getFlight,
     getAllFlights
 };
