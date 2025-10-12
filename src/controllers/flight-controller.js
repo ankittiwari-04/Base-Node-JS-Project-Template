@@ -1,6 +1,5 @@
-// controllers/flight-controller.js
 const { StatusCodes } = require('http-status-codes');
-const { FlightService } = require('../services');
+const FlightService = require('../services/flight-service');
 
 async function createFlight(req, res) {
     try {
@@ -87,8 +86,38 @@ async function getAllFlights(req, res) {
     }
 }
 
+async function updateSeats(req, res) {
+    try {
+        const response = await FlightService.updateSeats({
+            flightId: req.body.flightId,
+            seats: req.body.seats,
+            dec: req.body.dec
+        });
+        
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Successfully updated seats',
+            data: response,
+            error: {}
+        });
+        
+    } catch (error) {
+        return res.status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: error.message || 'Something went wrong',
+            data: {},
+            error: {
+                statusCode: error.statusCode,
+                name: error.name,
+                explanation: error.explanation
+            }
+        });
+    }
+}
+
 module.exports = {
     createFlight,
     getFlight,
-    getAllFlights
+    getAllFlights,
+    updateSeats
 };

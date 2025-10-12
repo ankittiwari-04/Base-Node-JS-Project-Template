@@ -74,17 +74,10 @@ async function getAllFlights(query) {
             sortFilter = sortFilters;
         }
 
-        console.log('Custom Filter:', customFilter);
-        console.log('Sort Filter:', sortFilter);
-
         const flights = await flightsRepository.getAllFlights(customFilter, sortFilter);
-        
-        console.log('Flights found:', flights.length);
-        
         return flights;
         
     } catch (error) {
-        console.error('Error in getAllFlights:', error);
         if (error instanceof AppError) {
             throw error;
         }
@@ -95,8 +88,25 @@ async function getAllFlights(query) {
     }
 }
 
+async function updateSeats(data) {
+    try {
+        const response = await flightsRepository.updateRemainingSeats(
+            data.flightId, 
+            data.seats, 
+            data.dec
+        );
+        return response;
+    } catch (error) {
+        throw new AppError(
+            'Cannot update seats',
+            StatusCodes.INTERNAL_SERVER_ERROR
+        );
+    }
+}
+
 module.exports = {
     createFlight,
     getFlight,
-    getAllFlights
+    getAllFlights,
+    updateSeats
 };

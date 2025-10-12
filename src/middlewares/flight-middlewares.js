@@ -56,10 +56,34 @@ function validateCreateRequest(req, res, next) {
     return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
   }
 
-  // if everything is fine
+  next();
+}
+
+function validateUpdateSeatsRequest(req, res, next) {
+  console.log('Received body:', req.body);
+  
+  if (!req.body.flightId) {
+    ErrorResponse.message = "Something went wrong while updating seats";
+    ErrorResponse.error = { explanation: "Flight ID not found in the request body" };
+    return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+  }
+
+  if (!req.body.seats) {
+    ErrorResponse.message = "Something went wrong while updating seats";
+    ErrorResponse.error = { explanation: "Number of seats not found in the request body" };
+    return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+  }
+
+  if (typeof req.body.dec !== 'boolean') {
+    ErrorResponse.message = "Something went wrong while updating seats";
+    ErrorResponse.error = { explanation: "dec must be a boolean value (true or false)" };
+    return res.status(StatusCodes.BAD_REQUEST).json(ErrorResponse);
+  }
+
   next();
 }
 
 module.exports = {
   validateCreateRequest,
+  validateUpdateSeatsRequest
 };

@@ -1,7 +1,8 @@
-// repositories/flight-repository.js
-const Sequelize = require('sequelize');
+const { Sequelize } = require('sequelize');
 const CrudRepository = require('./crud-repository');
 const { Flight, Airplane, Airport, City } = require('../models');
+const db = require('../models');
+const {addRowLockonFlights}=require('./queries');
 
 class FlightRepository extends CrudRepository {
     constructor() {
@@ -9,69 +10,66 @@ class FlightRepository extends CrudRepository {
     }
 
     async getAllFlights(filter, sort) {
-        try {
-            console.log('=== Starting getAllFlights ===');
-            console.log('Filter:', JSON.stringify(filter));
-            console.log('Sort:', JSON.stringify(sort));
-            
-            // First try a simple query with no includes
-            const simpleTest = await Flight.findAll({ limit: 5 });
-            console.log('Simple query returned:', simpleTest.length, 'flights');
-            
-            if (simpleTest.length > 0) {
-                console.log('Sample flight:', JSON.stringify(simpleTest[0], null, 2));
-            }
-            
-            // Now try with includes
-            const response = await Flight.findAll({
-                where: filter,
-                order: sort,
-                include: [
-                    {
-                        model: Airplane,
-                        required: false,
-                        as: 'airplane_detail',
-                        attributes: ['id', 'modelNumber', 'capacity']
+        const response = await Flight.findAll({
+            where: filter,
+            order: sort,
+            include: [
+                {
+                    model: Airplane,
+                    required: true,
+                    as: 'airplane_detail'
+                },
+                {
+                    model: Airport,
+                    required: true,
+                    as: 'departure_airport',
+                    on: {
+                        col1: Sequelize.where(
+                            Sequelize.col("Flight.departureAirportId"),
+                            "=",
+                            Sequelize.col("departure_airport.id")
+                        )
                     },
-                    {
-                        model: Airport,
-                        required: false,
-                        as: 'departure_airport',
-                        attributes: ['id', 'name', 'code', 'cityId'],
-                        include: [
-                            {
-                                model: City,
-                                required: true,
-                                as: 'city',
-                                attributes: ['id', 'name']
-                            }
-                        ]
-                    },
-                    {
-                        model: Airport,
-                        required: false,
-                        as: 'arrival_airport',
-                        attributes: ['id', 'name', 'code', 'cityId'],
-                        include: [
-                            {
-                                model: City,
-                                required: true,
-                                as: 'city',
-                                attributes: ['id', 'name']
-                            }
-                        ]
+                    include: {
+                        model: City,
+                        required: true
                     }
-                ]
-            });
-            
-            console.log('Query with includes returned:', response.length, 'flights');
-            console.log('=== End getAllFlights ===');
-            
-            return response;
-        } catch (error) {
-            console.error('Error in getAllFlights repository:', error);
-            throw error;
+                },
+                {
+                    model: Airport,
+                    required: true,
+                    as: 'arrival_airport',
+                    on: {
+                        col1: Sequelize.where(
+                            Sequelize.col("Flight.arrivalAirportId"),
+                            "=",
+                            Sequelize.col("arrival_airport.id")
+                        )
+                    },
+                    include: {
+                        model: City,
+                        required: true
+                    }
+                }
+            ]
+        });
+        return response;
+    }
+
+    async updateRemainingSeats(flightId, seats, dec = true) {
+        await db.sequelize.query(
+            `SELECT * FROM Flights WHERE Flights.id = ${flightId} FOR UPDATE;`
+        );
+
+        const flight = await Flight.findByPk(flightId);
+
+        if (dec) {
+            await flight.decrement('totalSeats', { by: seats });
+        } else {
+            await flight.increment('totalSeats', { by: seats });
         }
+
+        return flight;
     }
 }
 

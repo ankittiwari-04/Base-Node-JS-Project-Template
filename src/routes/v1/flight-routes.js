@@ -1,27 +1,33 @@
 const express = require('express');
-
 const { FlightController } = require('../../controllers');
 const { FlightMiddlewares } = require('../../middlewares');
 
 const router = express.Router();
 
-// /api/v1/flights POST - create a new flight
+// POST /api/v1/flights
 router.post(
   '/',
   FlightMiddlewares.validateCreateRequest,
   FlightController.createFlight
 );
 
-// /api/v1/flights/:id GET - fetch single flight
+// GET /api/v1/flights/:id
 router.get(
   '/:id',
   FlightController.getFlight
 );
 
-// /api/v1/flights GET - fetch all flights
+// GET /api/v1/flights
 router.get(
   '/',
   FlightController.getAllFlights
+);
+
+// PATCH /api/v1/flights/seats
+router.patch(
+  '/seats',
+  FlightMiddlewares.validateUpdateSeatsRequest,
+  FlightController.updateSeats
 );
 
 module.exports = router;
