@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 const CrudRepository = require('./crud-repository');
 const { Flight, Airplane, Airport, City } = require('../models');
 const db = require('../models');
-const {addRowLockonFlights}=require('./queries');
+const { addRowLockOnFlights } = require('./queries');
 
 class FlightRepository extends CrudRepository {
     constructor() {
@@ -25,9 +25,9 @@ class FlightRepository extends CrudRepository {
                     as: 'departure_airport',
                     on: {
                         col1: Sequelize.where(
-                            Sequelize.col("Flight.departureAirportId"),
-                            "=",
-                            Sequelize.col("departure_airport.id")
+                            Sequelize.col('Flight.departureAirportId'),
+                            '=',
+                            Sequelize.col('departure_airport.id')
                         )
                     },
                     include: {
@@ -41,9 +41,9 @@ class FlightRepository extends CrudRepository {
                     as: 'arrival_airport',
                     on: {
                         col1: Sequelize.where(
-                            Sequelize.col("Flight.arrivalAirportId"),
-                            "=",
-                            Sequelize.col("arrival_airport.id")
+                            Sequelize.col('Flight.arrivalAirportId'),
+                            '=',
+                            Sequelize.col('arrival_airport.id')
                         )
                     },
                     include: {
@@ -57,19 +57,24 @@ class FlightRepository extends CrudRepository {
     }
 
     async updateRemainingSeats(flightId, seats, dec = true) {
-        await db.sequelize.query(
-            `SELECT * FROM Flights WHERE Flights.id = ${flightId} FOR UPDATE;`
-        );
+        const transaction = await db.sequelize.transaction();
 
-        const flight = await Flight.findByPk(flightId);
+        try {
+            await db.sequelize.query(addRowLockOnFlights(flightId), { transaction });
+            const flight = await Flight.findByPk(flightId, { transaction });
 
-        if (dec) {
-            await flight.decrement('totalSeats', { by: seats });
-        } else {
-            await flight.increment('totalSeats', { by: seats });
+            if (dec) {
+                await flight.decrement('totalSeats', { by: seats, transaction });
+            } else {
+                await flight.increment('totalSeats', { by: seats, transaction });
+            }
+
+            await transaction.commit();
+            return flight;
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
         }
-
-        return flight;
     }
 }
 
